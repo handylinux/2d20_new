@@ -74,7 +74,7 @@ const isRobotOrigin = (origin) => {
   return originData && originData.special === 'robot';
 };
 
-// Функции для проверки ограничений по типам предметов
+// Функции для проверки ограничений по типам предметов (ДОЛЖНЫ БЫТЬ ПЕРЕД renderItem)
 const canEquipWeapon = (origin) => true; // Все могут использовать оружие
 
 const canEquipArmor = (origin) => !isRobotOrigin(origin); // Все кроме роботов могут носить броню/одежду
@@ -136,7 +136,7 @@ const InventoryScreen = () => {
 
   const handleOpenModificationModal = (weapon) => {
     if (!isWeaponItem(weapon)) {
-      showAlert("Ошибка", "Модифицировать можно только оружие, идиот.");
+      showAlert("Ошибка", "Модифицировать можно только оружие.");
       return;
     }
     setSelectedWeaponForModification(weapon);
