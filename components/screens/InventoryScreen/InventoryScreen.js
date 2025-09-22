@@ -481,19 +481,31 @@ const InventoryScreen = () => {
 
       // ← ИСПРАВЛЕНИЕ: Проверяем, экипирован ли предмет
       const isEquipped = equippedWeapons.some((w, index) => {
-        const isMatch = w && (
-          (w.instanceId === item.instanceId) ||
-          (w.uniqueId === item.uniqueId) ||
-          (w.Name === item.Name && w.Название === item.Название)
-        );
-        if (isMatch) {
-          console.log(`[DEBUG] Weapon equipped found:`, {
-            weapon: w.Name || w.name,
-            item: item.Name || item.name,
-            slot: index
-          });
+        if (!w) return false;
+        
+        // Проверяем по instanceId - самый точный способ
+        if (w.instanceId && item.instanceId && w.instanceId === item.instanceId) {
+          return true;
         }
-        return isMatch;
+        
+        // Проверяем по uniqueId
+        if (w.uniqueId && item.uniqueId && w.uniqueId === item.uniqueId) {
+          return true;
+        }
+        
+        // Проверяем по weaponId для оружия
+        if (w.weaponId && item.weaponId && w.weaponId === item.weaponId) {
+          return true;
+        }
+        
+        // Проверяем по имени только если оно есть у обоих предметов
+        const wName = w.Name || w.Название || w.name;
+        const itemName = item.Name || item.Название || item.name;
+        if (wName && itemName && wName === itemName) {
+          return true;
+        }
+        
+        return false;
       }) || Object.values(equippedArmor).some(slotData => {
         const isArmorMatch = slotData.armor === item;
         const isClothingMatch = slotData.clothing === item;
@@ -512,12 +524,36 @@ const InventoryScreen = () => {
 
       // Определяем тип экипировки и слот
       equippedWeapons.forEach((w, index) => {
-        if (w === item || 
-            (w && item && (
-              (w.instanceId === item.instanceId) ||
-              (w.uniqueId === item.uniqueId) ||
-              (w.Name === item.Name && w.Название === item.Название)
-            ))) {
+        if (!w) return;
+        
+        let isWeaponMatch = false;
+        
+        // Прямое сравнение ссылки
+        if (w === item) {
+          isWeaponMatch = true;
+        }
+        // Проверяем по instanceId - самый точный способ
+        else if (w.instanceId && item.instanceId && w.instanceId === item.instanceId) {
+          isWeaponMatch = true;
+        }
+        // Проверяем по uniqueId
+        else if (w.uniqueId && item.uniqueId && w.uniqueId === item.uniqueId) {
+          isWeaponMatch = true;
+        }
+        // Проверяем по weaponId для оружия
+        else if (w.weaponId && item.weaponId && w.weaponId === item.weaponId) {
+          isWeaponMatch = true;
+        }
+        // Проверяем по имени только если оно есть у обоих предметов
+        else {
+          const wName = w.Name || w.Название || w.name;
+          const itemName = item.Name || item.Название || item.name;
+          if (wName && itemName && wName === itemName) {
+            isWeaponMatch = true;
+          }
+        }
+        
+        if (isWeaponMatch) {
           equippedType = 'weapon';
           equippedSlot = index;
         }
@@ -571,7 +607,7 @@ const InventoryScreen = () => {
     // Проверки ограничений по типам
     const canUseThisWeapon = canEquipWeapon(origin);
     const canUseThisArmor = canEquipArmor(origin);
-    const canUseConsumables = canUseConsumables(origin);
+    const canUseThisConsumables = canUseConsumables(origin);
     const canUseRobotArmor = canEquipRobotArmor(origin); // Пока закомментировано
 
     // ← ОТЛАДОЧНЫЕ ЛОГИ ДЛЯ ДИАГНОСТИКИ
@@ -587,10 +623,10 @@ const InventoryScreen = () => {
         isRobot,
         canUseThisWeapon,
         canUseThisArmor,
-        canUseConsumables,
+        canUseThisConsumables,
         canUseRobotArmor,
         shouldShowEquipButton: (isWeapon && canUseThisWeapon) || (isArmor && canUseThisArmor),
-        shouldShowApplyButton: ((isChem || isFood) && canUseConsumables)
+        shouldShowApplyButton: ((isChem || isFood) && canUseThisConsumables)
       });
     }
 
@@ -649,7 +685,7 @@ const InventoryScreen = () => {
           )}
 
           {/* Кнопка применения для препаратов - недоступно роботам */}
-          {isChem && canUseConsumables && !item.isEquipped && (
+          {isChem && canUseThisConsumables && !item.isEquipped && (
               <TouchableOpacity
                   style={[styles.actionButton, styles.applyButton]}
                   onPress={() => handleApplyChem(item.originalItem || item)}>
@@ -658,7 +694,7 @@ const InventoryScreen = () => {
           )}
 
           {/* Кнопка применения для еды/напитков - недоступно роботам */}
-          {isFood && canUseConsumables && !item.isEquipped && (
+          {isFood && canUseThisConsumables && !item.isEquipped && (
               <TouchableOpacity
                   style={[styles.actionButton, styles.applyButton]}
                   onPress={() => handleApplyChem(item.originalItem || item)}>

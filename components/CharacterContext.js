@@ -125,14 +125,17 @@ export const CharacterProvider = ({ children }) => {
 
     console.log(`[CharacterContext] Adjusting ${itemName || keyToMatch} by ${amount}`);
 
+    let finalQuantity = 'unknown';
+    
     setEquipment(prev => {
       if (!prev?.items) {
         if (amount <= 0) return prev;
+        finalQuantity = Math.max(1, amount);
         return { 
           ...prev, 
           items: [{ 
             ...item, 
-            quantity: Math.max(1, amount),
+            quantity: finalQuantity,
             itemType: item.itemType || 'misc' // Автоматическое определение типа
           }] 
         };
@@ -149,11 +152,13 @@ export const CharacterProvider = ({ children }) => {
         const newQuantity = (newItems[itemIndex].quantity || 1) + amount;
         if (newQuantity <= 0) {
           newItems.splice(itemIndex, 1); // Удаляем, если <=0
+          finalQuantity = 'removed';
         } else {
           newItems[itemIndex] = { 
             ...newItems[itemIndex], 
             quantity: newQuantity 
           };
+          finalQuantity = newQuantity;
         }
       } else if (amount > 0) {
         // Добавляем новый предмет
@@ -162,12 +167,15 @@ export const CharacterProvider = ({ children }) => {
           quantity: amount,
           itemType: item.itemType || 'misc'
         });
+        finalQuantity = amount;
+      } else {
+        finalQuantity = 'not found';
       }
 
       return { ...prev, items: newItems };
     });
 
-    console.log(`[CharacterContext] Item adjusted: ${itemName || keyToMatch}, new quantity: ${amount > 0 ? amount : 'removed'}`);
+    console.log(`[CharacterContext] Item adjusted: ${itemName || keyToMatch}, new quantity: ${finalQuantity}`);
     return true;
   };
 
