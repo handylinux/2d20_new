@@ -1,5 +1,7 @@
 {
   "navigation": {
+    "start": "Start",
+    "start_tab": "Start",
     "character": "Character",
     "character_tab": "Character",
     "equipment": "Equipment",

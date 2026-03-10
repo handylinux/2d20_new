@@ -352,6 +352,36 @@ const styles = StyleSheet.create({
   confirmButton: {
     backgroundColor: '#f44336',
   },
+  nameInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  nameInputLabel: {
+    color: '#333',
+    fontSize: 14,
+    marginRight: 8,
+    fontWeight: 'bold',
+  },
+  nameInput: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+    paddingVertical: 4,
+  },
+  saveCharacterButtonContainer: {
+    marginTop: 16,
+    padding: 10,
+  },
+  saveCharacterButton: {
+    backgroundColor: '#2196F3',
+  },
 });
 
 export default styles;

@@ -15,6 +15,7 @@ import { CharacterProvider } from './components/CharacterContext';
 import { LocalizationProvider, useLocalization } from './components/LocalizationContext';
 import LanguageSwitcher from './components/LanguageSwitcher';
 
+import StartScreen from './components/screens/StartScreen';
 import CharacterScreen from './components/screens/CharacterScreen/CharacterScreen';
 import EquipmentScreen from './components/screens/WeaponsAndArmorScreen/WeaponsAndArmorScreen';
 import InventoryScreen from './components/screens/InventoryScreen/InventoryScreen';
@@ -45,7 +46,9 @@ function AppNavigator() {
               screenOptions={({ route }) => ({
                 tabBarIcon: ({ focused, color }) => {
                   let iconName;
-                  if (route.name === t('navigation.character')) {
+                  if (route.name === t('navigation.start')) {
+                    iconName = focused ? 'home' : 'home-outline';
+                  } else if (route.name === t('navigation.character')) {
                     iconName = focused ? 'person' : 'person-outline';
                   } else if (route.name === t('navigation.equipment')) {
                     iconName = focused ? 'shield' : 'shield-outline';
@@ -75,6 +78,22 @@ function AppNavigator() {
                 animationEnabled: true,
                 style: { backgroundColor: 'transparent' },
               })}>
+              <Tab.Screen
+                name={t('navigation.start')}
+                component={StartScreen}
+                options={{
+                  tabBarLabel: ({ focused, color }) => (
+                    <Text
+                      style={{
+                        color,
+                        fontSize: 11,
+                        textAlign: 'center',
+                      }}>
+                      {t('navigation.start_tab')}
+                    </Text>
+                  ),
+                }}
+              />
               <Tab.Screen
                 name={t('navigation.character')}
                 component={CharacterScreen}

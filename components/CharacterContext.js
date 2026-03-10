@@ -10,6 +10,7 @@ import {
   calculateCarryWeight
 } from './screens/CharacterScreen/logic/characterLogic';
 import { meetsPerkRequirements, getPerkUnmetReasons, annotatePerks } from './screens/CharacterScreen/logic/perksLogic';
+import { cleanupRealTimeSaving } from '../CharacterManager';
 
 // --- ВАЖНО: поправьте путь к utils если у вас он отличается ---
 import {
@@ -465,6 +466,9 @@ export const CharacterProvider = ({ children }) => {
     setCurrentHealth(currentMaxHealth);
     
     setModifiedItems(new Map());
+    
+    // Cleanup real-time saving when character is reset
+    cleanupRealTimeSaving();
   };
 
   const value = {

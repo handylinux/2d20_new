@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ImageBackground, Pressable, SafeAreaView, StatusBar, Modal, Platform
+  ImageBackground, Pressable, SafeAreaView, StatusBar, Modal, Platform, TextInput
 } from 'react-native';
 import { useCharacter } from '../../CharacterContext';
 import { showAlert, showAlertWithButtons, showConfirm } from '../../../utils/alertUtils';
@@ -28,6 +28,8 @@ import {
 } from './logic/characterLogic';
 import { AttributesSection } from './AttributesSection';
 import styles from '../../../styles';
+import { saveCharacter, setupRealTimeSaving, cleanupRealTimeSaving, loadCharacter } from '../../CharacterManager';
+import { useRoute, useNavigation } from '@react-navigation/native';
 
 // Определяем константу BASE_TAGGED_SKILLS для исправления ReferenceError
 const BASE_TAGGED_SKILLS = 3; // Максимальное количество основных навыков
@@ -214,6 +216,13 @@ const LuckPointsRow = ({
 };
 
 export default function CharacterScreen() {
+  const route = useRoute();
+  const navigation = useNavigation();
+  
+  // Extract navigation parameters
+  const isNewCharacter = route.params?.isNewCharacter ?? true;
+  const characterNameFromNav = route.params?.characterName || '';
+  
   const {
     level, setLevel,
     attributes, setAttributes,
@@ -238,6 +247,8 @@ export default function CharacterScreen() {
     commitAttributeChanges,
     calculateMaxHealth,
     adjustItemQuantity, // ← НОВОЕ: для добавления предметов из комплекта
+    selectedPerks, setSelectedPerks,
+    modifiedItems, setModifiedItems,
   } = useCharacter();
 
   // ← ЛОГИ ДЛЯ ВАЛИДАЦИИ ДИАГНОЗА
@@ -259,6 +270,13 @@ export default function CharacterScreen() {
   const [tempAttributes, setTempAttributes] = useState(null);
   const [perkPointsToDistribute, setPerkPointsToDistribute] = useState(0);
 
+  // Состояние для имени персонажа и флага сохранения
+  const [characterName, setCharacterName] = useState('');
+  const [isCharacterSaved, setIsCharacterSaved] = useState(false);
+  
+  // Cleanup function for real-time saving
+  const [realTimeCleanup, setRealTimeCleanup] = useState(null);
+
   // Активация режима распределения очков от перков
   useEffect(() => {
     if (availablePerkAttributePoints > 0 && attributesSaved) {
@@ -279,6 +297,187 @@ export default function CharacterScreen() {
       }
     }
   }, [attributes, maxLuckPoints, attributesSaved, setMaxLuckPoints, setLuckPoints]);
+
+  // Cleanup real-time saving when component unmounts
+  useEffect(() => {
+    return () => {
+      if (realTimeCleanup) {
+        realTimeCleanup();
+      }
+    };
+  }, [realTimeCleanup]);
+
+  // Load character data when navigating from StartScreen
+  useEffect(() => {
+    const loadCharacterData = async () => {
+      // Check if we're loading an existing character (not creating new)
+      if (!isNewCharacter && characterNameFromNav) {
+        const result = await loadCharacter(characterNameFromNav);
+        if (result.success && result.data) {
+          const loadedData = result.data;
+          
+          // Load basic character info
+          setCharacterName(loadedData.name || '');
+          setIsCharacterSaved(true);
+          
+          // Load origin
+          if (loadedData.origin) {
+            setOrigin(loadedData.origin);
+          }
+          
+          // Load trait
+          if (loadedData.trait) {
+            setTrait(loadedData.trait);
+          }
+          
+          // Load attributes
+          if (loadedData.attributes) {
+            setAttributes(loadedData.attributes);
+          }
+          
+          // Load skills
+          if (loadedData.skills) {
+            setSkills(loadedData.skills);
+          }
+          
+          // Load selected skills
+          if (loadedData.selectedSkills) {
+            setSelectedSkills(loadedData.selectedSkills);
+          }
+          
+          // Load extra tagged skills
+          if (loadedData.extraTaggedSkills) {
+            setExtraTaggedSkills(loadedData.extraTaggedSkills);
+          }
+          
+          // Load forced selected skills
+          if (loadedData.forcedSelectedSkills) {
+            setForcedSelectedSkills(loadedData.forcedSelectedSkills);
+          }
+          
+          // Load level
+          if (loadedData.level !== undefined) {
+            setLevel(loadedData.level);
+          }
+          
+          // Load equipment
+          if (loadedData.equipment) {
+            setEquipment(loadedData.equipment);
+          }
+          
+          // Load effects
+          if (loadedData.effects) {
+            setEffects(loadedData.effects);
+          }
+          
+          // Load equipped weapons
+          if (loadedData.equippedWeapons) {
+            setEquippedWeapons(loadedData.equippedWeapons);
+          }
+          
+          // Load equipped armor
+          if (loadedData.equippedArmor) {
+            setEquippedArmor(loadedData.equippedArmor);
+          }
+          
+          // Load caps
+          if (loadedData.caps !== undefined) {
+            setCaps(loadedData.caps);
+          }
+          
+          // Load health
+          if (loadedData.currentHealth !== undefined) {
+            setCurrentHealth(loadedData.currentHealth);
+          }
+          
+          // Load luck points
+          if (loadedData.luckPoints !== undefined) {
+            setLuckPoints(loadedData.luckPoints);
+          }
+          
+          if (loadedData.maxLuckPoints !== undefined) {
+            setMaxLuckPoints(loadedData.maxLuckPoints);
+          }
+          
+          // Load saved states
+          if (loadedData.attributesSaved !== undefined) {
+            setAttributesSaved(loadedData.attributesSaved);
+          }
+          
+          if (loadedData.skillsSaved !== undefined) {
+            setSkillsSaved(loadedData.skillsSaved);
+          }
+          
+          // Load selected perks
+          if (loadedData.selectedPerks) {
+            setSelectedPerks(loadedData.selectedPerks);
+          }
+          
+          // Load modified items (convert from array to Map)
+          if (loadedData.modifiedItems && Array.isArray(loadedData.modifiedItems)) {
+            setModifiedItems(new Map(loadedData.modifiedItems));
+          }
+          
+          // Load derived stats
+          if (loadedData.carryWeight !== undefined) {
+            // Note: carryWeight is calculated in context, but we can set it if needed
+          }
+          
+          if (loadedData.meleeBonus !== undefined) {
+            // Note: meleeBonus is calculated in context
+          }
+          
+          if (loadedData.initiative !== undefined) {
+            // Note: initiative is calculated in context
+          }
+          
+          if (loadedData.defense !== undefined) {
+            // Note: defense is calculated in context
+          }
+          
+          // Set up real-time saving for loaded character
+          const cleanup = setupRealTimeSaving(characterNameFromNav, {
+            name: characterNameFromNav,
+            origin: loadedData.origin,
+            trait: loadedData.trait,
+            attributes: loadedData.attributes,
+            skills: loadedData.skills,
+            selectedSkills: loadedData.selectedSkills,
+            extraTaggedSkills: loadedData.extraTaggedSkills,
+            forcedSelectedSkills: loadedData.forcedSelectedSkills,
+            level: loadedData.level,
+            equipment: loadedData.equipment,
+            effects: loadedData.effects,
+            equippedWeapons: loadedData.equippedWeapons,
+            equippedArmor: loadedData.equippedArmor,
+            caps: loadedData.caps,
+            currentHealth: loadedData.currentHealth,
+            luckPoints: loadedData.luckPoints,
+            maxLuckPoints: loadedData.maxLuckPoints,
+            attributesSaved: loadedData.attributesSaved,
+            skillsSaved: loadedData.skillsSaved,
+            selectedPerks: loadedData.selectedPerks,
+            modifiedItems: Array.from((loadedData.modifiedItems || []).entries()),
+            carryWeight: loadedData.carryWeight,
+            meleeBonus: loadedData.meleeBonus,
+            initiative: loadedData.initiative,
+            defense: loadedData.defense
+          }, (savedData) => {
+            console.log('[CharacterScreen] Character auto-saved after load:', savedData.name);
+          });
+          
+          setRealTimeCleanup(cleanup);
+          
+          console.log('[CharacterScreen] Character loaded successfully:', characterNameFromNav);
+        } else {
+          console.error('[CharacterScreen] Failed to load character:', result.error);
+          showAlert("Ошибка", `Не удалось загрузить персонажа: ${result.error}`);
+        }
+      }
+    };
+    
+    loadCharacterData();
+  }, [isNewCharacter, characterNameFromNav]);
 
   const isPerkAttributeMode = tempAttributes !== null;
   const currentAttributes = isPerkAttributeMode ? tempAttributes : attributes;
@@ -835,6 +1034,78 @@ export default function CharacterScreen() {
     setShowResetWarning(false);
   };
 
+  // Обработчик сохранения персонажа
+  const handleSaveCharacter = () => {
+    if (!characterName.trim()) {
+      showAlert("Ошибка", "Введите имя персонажа");
+      return;
+    }
+    
+    if (!origin) {
+      showAlert("Ошибка", "Необходимо выбрать происхождение.");
+      return;
+    }
+    if (!trait) {
+      showAlert("Ошибка", "Необходимо выбрать черту.");
+      return;
+    }
+    if (!attributesSaved) {
+      showAlert("Ошибка", "Сначала сохраните атрибуты.");
+      return;
+    }
+    if (!skillsSaved) {
+      showAlert("Ошибка", "Сначала сохраните навыки.");
+      return;
+    }
+    
+    // Create character data object
+    const characterData = {
+      name: characterName,
+      origin,
+      trait,
+      attributes,
+      skills,
+      selectedSkills,
+      extraTaggedSkills,
+      forcedSelectedSkills,
+      level,
+      equipment,
+      effects,
+      equippedWeapons,
+      equippedArmor,
+      caps,
+      currentHealth,
+      luckPoints,
+      maxLuckPoints,
+      attributesSaved,
+      skillsSaved,
+      selectedPerks,
+      modifiedItems: Array.from(modifiedItems.entries()),
+      carryWeight,
+      meleeBonus,
+      initiative,
+      defense
+    };
+    
+    // Save initial character data
+    saveCharacter(characterData).then(result => {
+      if (result.success) {
+        setIsCharacterSaved(true);
+        
+        // Set up real-time saving
+        const cleanup = setupRealTimeSaving(characterName, characterData, (savedData) => {
+          console.log('[CharacterScreen] Character auto-saved:', savedData.name);
+        });
+        
+        setRealTimeCleanup(cleanup);
+        
+        showAlert("Готово", `Персонаж "${characterName}" сохранен! Редактирование разблокировано.`);
+      } else {
+        showAlert("Ошибка", `Не удалось сохранить персонажа: ${result.error}`);
+      }
+    });
+  };
+
   const handleEquipmentPress = () => {
     if (origin && origin.equipmentKits) {
       if (equipment) {
@@ -913,21 +1184,38 @@ export default function CharacterScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           <View style={styles.header}>
+            {/* Имя персонажа - отображается только если не сохранен */}
+            {!isCharacterSaved && (
+              <View style={styles.nameInputContainer}>
+                <Text style={styles.nameInputLabel}>Имя:</Text>
+                <TextInput
+                  style={styles.nameInput}
+                  value={characterName}
+                  onChangeText={setCharacterName}
+                  placeholder="Введите имя персонажа"
+                  placeholderTextColor="#888"
+                  editable={!isCharacterSaved}
+                />
+              </View>
+            )}
+            
             <PressableRow 
               title="Происхождение" 
               value={origin ? origin.name : 'Не выбрано'}
               onPress={() => setIsOriginModalVisible(true)}
+              disabled={isCharacterSaved}
             />
             <PressableRow 
               title="Черта" 
               value={trait ? trait.name : 'Не выбрано'}
               onPress={handleTraitPress}
-              disabled={trait && !isMultiTraitOrigin(origin?.name)}
+              disabled={isCharacterSaved || (trait && !isMultiTraitOrigin(origin?.name))}
             />
             <PressableRow
               title="Снаряжение"
               value={equipment ? equipment.name : 'Не выбрано'}
               onPress={handleEquipmentPress}
+              disabled={isCharacterSaved}
             />
             <View style={styles.levelContainer}>
               <Text style={styles.levelLabel}>Уровень:</Text>
@@ -935,6 +1223,7 @@ export default function CharacterScreen() {
                 value={level}
                 onIncrease={() => handleLevelChange(1)}
                 onDecrease={() => handleLevelChange(-1)}
+                disabled={isCharacterSaved}
               />
             </View>
           </View>
@@ -952,6 +1241,7 @@ export default function CharacterScreen() {
                 isPerkMode={isPerkAttributeMode}
                 onApplyPerkAttributes={handleSavePerkAttributes}
                 baseAttributes={isPerkAttributeMode ? attributes : null}
+                disabled={isCharacterSaved}
               />
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
@@ -1024,9 +1314,9 @@ export default function CharacterScreen() {
                       onIncrease={() => handleChangeSkillValue(index, 1)}
                       onDecrease={() => handleChangeSkillValue(index, -1)}
                       rowStyle={rowStyle}
-                      disabled={!canDistributeSkills && !showTraitSkillModal}
+                      disabled={!canDistributeSkills && !showTraitSkillModal || isCharacterSaved}
                       trait={trait}
-                      increaseDisabled={skillPointsLeft <= 0}
+                      increaseDisabled={skillPointsLeft <= 0 || isCharacterSaved}
                     />
                   );
                 })}
@@ -1047,6 +1337,21 @@ export default function CharacterScreen() {
                     </TouchableOpacity>
                   </View>
                 )}
+                
+                {/* Кнопка сохранения персонажа - отображается в конце */}
+                <View style={styles.saveCharacterButtonContainer}>
+                  <TouchableOpacity 
+                    style={[
+                      styles.button, 
+                      styles.saveCharacterButton,
+                      (!characterName.trim() || !origin || !trait || !attributesSaved || !skillsSaved) && styles.disabledButton
+                    ]}
+                    onPress={handleSaveCharacter}
+                    disabled={!characterName.trim() || !origin || !trait || !attributesSaved || !skillsSaved}
+                  >
+                    <Text style={styles.buttonText}>Сохранить персонажа</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
