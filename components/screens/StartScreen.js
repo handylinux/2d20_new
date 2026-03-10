@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { saveCharacter, listCharacters, loadCharacter } from '../CharacterManager';
+import { CharacterManager } from '../CharacterManager';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CELL_WIDTH = (SCREEN_WIDTH - 48) / 4; // 4 columns with padding
@@ -17,11 +17,11 @@ const StartScreen = () => {
 
   const loadCharacters = async () => {
     try {
-      const charNames = await listCharacters();
+      const charNames = await CharacterManager.listCharacters();
       const charList = [];
       
       for (const name of charNames) {
-        const result = await loadCharacter(name);
+        const result = await CharacterManager.loadCharacter(name);
         if (result.success && result.data) {
           charList.push({
             name: result.data.name || name,

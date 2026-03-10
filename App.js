@@ -6,7 +6,7 @@ if (Appearance.removeChangeListener === undefined) {
 
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View, StyleSheet, ImageBackground } from 'react-native';
 import { SafeAreaView, SafeAreaProvider } from 'react-native-safe-area-context';
@@ -21,7 +21,7 @@ import EquipmentScreen from './components/screens/WeaponsAndArmorScreen/WeaponsA
 import InventoryScreen from './components/screens/InventoryScreen/InventoryScreen';
 import PerksAndTraitsScreen from './components/screens/PerksAndTraitsScreen/PerksAndTraitsScreen';
 
-const Tab = createMaterialTopTabNavigator();
+const Stack = createNativeStackNavigator();
 
 function AppNavigator() {
   const { t } = useLocalization();
@@ -33,132 +33,69 @@ function AppNavigator() {
           source={require('./assets/bg.png')}
           style={styles.background}
           imageStyle={{ opacity: 0.3 }}>
-          <SafeAreaView
-            style={styles.container}
-            edges={['top', 'bottom']}>
+          <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             {/* Language Switcher in top right corner */}
             <View style={styles.languageSwitcherContainer}>
               <LanguageSwitcher />
             </View>
 
-            <Tab.Navigator
-              tabBarPosition="bottom"
-              screenOptions={({ route }) => ({
-                tabBarIcon: ({ focused, color }) => {
-                  let iconName;
-                  if (route.name === t('navigation.start')) {
-                    iconName = focused ? 'home' : 'home-outline';
-                  } else if (route.name === t('navigation.character')) {
-                    iconName = focused ? 'person' : 'person-outline';
-                  } else if (route.name === t('navigation.equipment')) {
-                    iconName = focused ? 'shield' : 'shield-outline';
-                  } else if (route.name === t('navigation.inventory')) {
-                    iconName = focused
-                      ? 'briefcase'
-                      : 'briefcase-outline';
-                  } else if (route.name === t('navigation.perks')) {
-                    iconName = focused ? 'star' : 'star-outline';
-                  }
-                  return (
-                    <Ionicons name={iconName} size={16} color={color} />
-                  );
-                },
-                tabBarStyle: {
-                  backgroundColor: '#1a1a1a',
-                  borderTopColor: '#5a5a5a',
-                },
-                tabBarActiveTintColor: '#f0e68c',
-                tabBarInactiveTintColor: 'gray',
-                tabBarShowIcon: true,
-                tabBarIndicatorStyle: {
-                  backgroundColor: '#f0e68c',
-                  height: 2,
-                },
-                swipeEnabled: true,
-                animationEnabled: true,
-                style: { backgroundColor: 'transparent' },
-              })}>
-              <Tab.Screen
-                name={t('navigation.start')}
+            <Stack.Navigator initialRouteName="Start">
+              <Stack.Screen
+                name="Start"
                 component={StartScreen}
                 options={{
-                  tabBarLabel: ({ focused, color }) => (
-                    <Text
-                      style={{
-                        color,
-                        fontSize: 11,
-                        textAlign: 'center',
-                      }}>
-                      {t('navigation.start_tab')}
-                    </Text>
-                  ),
+                  headerTitle: t('navigation.start'),
+                  headerStyle: {
+                    backgroundColor: '#1a1a1a',
+                  },
+                  headerTintColor: '#f0e68c',
                 }}
               />
-              <Tab.Screen
-                name={t('navigation.character')}
+              <Stack.Screen
+                name="Character"
                 component={CharacterScreen}
                 options={{
-                  tabBarLabel: ({ focused, color }) => (
-                    <Text
-                      style={{
-                        color,
-                        fontSize: 11,
-                        textAlign: 'center',
-                      }}>
-                      {t('navigation.character_tab')}
-                    </Text>
-                  ),
+                  headerTitle: t('navigation.character'),
+                  headerStyle: {
+                    backgroundColor: '#1a1a1a',
+                  },
+                  headerTintColor: '#f0e68c',
                 }}
               />
-              <Tab.Screen
-                name={t('navigation.equipment')}
+              <Stack.Screen
+                name="Equipment"
                 component={EquipmentScreen}
                 options={{
-                  tabBarLabel: ({ focused, color }) => (
-                    <Text
-                      style={{
-                        color,
-                        fontSize: 11,
-                        textAlign: 'center',
-                      }}>
-                      {t('navigation.equipment_tab')}
-                    </Text>
-                  ),
+                  headerTitle: t('navigation.equipment'),
+                  headerStyle: {
+                    backgroundColor: '#1a1a1a',
+                  },
+                  headerTintColor: '#f0e68c',
                 }}
               />
-              <Tab.Screen
-                name={t('navigation.inventory')}
+              <Stack.Screen
+                name="Inventory"
                 component={InventoryScreen}
                 options={{
-                  tabBarLabel: ({ focused, color }) => (
-                    <Text
-                      style={{
-                        color,
-                        fontSize: 11,
-                        textAlign: 'center',
-                      }}>
-                      {t('navigation.inventory_tab')}
-                    </Text>
-                  ),
+                  headerTitle: t('navigation.inventory'),
+                  headerStyle: {
+                    backgroundColor: '#1a1a1a',
+                  },
+                  headerTintColor: '#f0e68c',
                 }}
               />
-              <Tab.Screen
-                name={t('navigation.perks')}
+              <Stack.Screen
+                name="Perks"
                 component={PerksAndTraitsScreen}
                 options={{
-                  tabBarLabel: ({ focused, color }) => (
-                    <Text
-                      style={{
-                        color,
-                        fontSize: 11,
-                        textAlign: 'center',
-                      }}>
-                      {t('navigation.perks_tab')}
-                    </Text>
-                  ),
+                  headerTitle: t('navigation.perks'),
+                  headerStyle: {
+                    backgroundColor: '#1a1a1a',
+                  },
+                  headerTintColor: '#f0e68c',
                 }}
               />
-            </Tab.Navigator>
+            </Stack.Navigator>
           </SafeAreaView>
         </ImageBackground>
       </View>
